@@ -61,7 +61,7 @@ export class Seed extends OpenAPIRoute {
 		let inserted = 0;
 		for (const feedback of sampleFeedback) {
 			try {
-				await db
+				const result = await db
 					.prepare(
 						`INSERT INTO feedback (source, title, body, fingerprint, analysis_status)
 						 VALUES (?, ?, ?, ?, 'pending')
@@ -69,7 +69,11 @@ export class Seed extends OpenAPIRoute {
 					)
 					.bind(feedback.source, feedback.title, feedback.body, feedback.fingerprint)
 					.run();
-				inserted++;
+
+				// Only count if a row was actually inserted (not skipped due to conflict)
+				if (result.meta.changes > 0) {
+					inserted++;
+				}
 			} catch (error) {
 				console.error("Error inserting feedback:", error);
 			}

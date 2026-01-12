@@ -11,8 +11,8 @@ export class FeedbackList extends OpenAPIRoute {
 			query: z.object({
 				source: z.string().optional(),
 				q: z.string().optional(),
-				limit: z.string().optional(),
-				offset: z.string().optional(),
+				limit: z.coerce.number().int().min(1).max(100).default(20).optional(),
+				offset: z.coerce.number().int().min(0).default(0).optional(),
 			}),
 		},
 		responses: {
@@ -34,14 +34,14 @@ export class FeedbackList extends OpenAPIRoute {
 
 	async handle(c: AppContext) {
 		const data = await this.getValidatedData<typeof this.schema>();
-		const { source, q, limit = "20", offset = "0" } = data.query;
+		const { source, q, limit = 20, offset = 0 } = data.query;
 		const db = c.env.DB;
 
-		const limitNum = parseInt(limit, 10);
-		const offsetNum = parseInt(offset, 10);
+		const limitNum = limit;
+		const offsetNum = offset;
 
 		let query = "SELECT * FROM feedback WHERE 1=1";
-		const bindings: string[] = [];
+		const bindings: (string | number)[] = [];
 
 		if (source) {
 			query += " AND source = ?";
@@ -61,7 +61,7 @@ export class FeedbackList extends OpenAPIRoute {
 
 		// Get paginated results
 		query += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
-		bindings.push(limitNum.toString(), offsetNum.toString());
+		bindings.push(limitNum, offsetNum);
 
 		const results = await db.prepare(query).bind(...bindings).all();
 
