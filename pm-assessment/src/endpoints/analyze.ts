@@ -135,16 +135,24 @@ BODY: ${feedback.body}`;
 				.bind(id)
 				.run();
 
+			const errorMessage = error instanceof Error ? error.message : String(error);
 			await db
 				.prepare(
 					`INSERT INTO analysis (feedback_id, error, updated_at)
 					 VALUES (?, ?, datetime('now'))
 					 ON CONFLICT(feedback_id) DO UPDATE SET error = excluded.error, updated_at = datetime('now')`
 				)
-				.bind(id, String(error))
+				.bind(id, errorMessage)
 				.run();
 
-			throw error;
+			return c.json(
+				{
+					error: "Analysis failed",
+					message: errorMessage,
+					feedback_id: id,
+				},
+				500
+			);
 		}
 	}
 }
