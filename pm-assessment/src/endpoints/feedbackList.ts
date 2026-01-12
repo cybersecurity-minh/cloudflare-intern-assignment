@@ -1,0 +1,75 @@
+import { OpenAPIRoute } from "chanfana";
+import { z } from "zod";
+import type { AppContext } from "../types";
+import { Feedback } from "../types";
+
+export class FeedbackList extends OpenAPIRoute {
+	schema = {
+		tags: ["Feedback"],
+		summary: "List feedback with optional filters",
+		request: {
+			query: z.object({
+				source: z.string().optional(),
+				q: z.string().optional(),
+				limit: z.string().optional(),
+				offset: z.string().optional(),
+			}),
+		},
+		responses: {
+			"200": {
+				description: "List of feedback",
+				content: {
+					"application/json": {
+						schema: z.object({
+							data: z.array(Feedback),
+							total: z.number(),
+							limit: z.number(),
+							offset: z.number(),
+						}),
+					},
+				},
+			},
+		},
+	};
+
+	async handle(c: AppContext) {
+		const data = await this.getValidatedData<typeof this.schema>();
+		const { source, q, limit = "20", offset = "0" } = data.query;
+		const db = c.env.DB;
+
+		const limitNum = parseInt(limit, 10);
+		const offsetNum = parseInt(offset, 10);
+
+		let query = "SELECT * FROM feedback WHERE 1=1";
+		const bindings: string[] = [];
+
+		if (source) {
+			query += " AND source = ?";
+			bindings.push(source);
+		}
+
+		if (q) {
+			query += " AND (title LIKE ? OR body LIKE ?)";
+			const searchTerm = `%${q}%`;
+			bindings.push(searchTerm, searchTerm);
+		}
+
+		// Get total count
+		const countQuery = query.replace("SELECT *", "SELECT COUNT(*) as count");
+		const countResult = await db.prepare(countQuery).bind(...bindings).first<{ count: number }>();
+		const total = countResult?.count || 0;
+
+		// Get paginated results
+		query += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
+		bindings.push(limitNum.toString(), offsetNum.toString());
+
+		const results = await db.prepare(query).bind(...bindings).all();
+
+		return {
+			data: results.results || [],
+			total,
+			limit: limitNum,
+			offset: offsetNum,
+		};
+	}
+}
