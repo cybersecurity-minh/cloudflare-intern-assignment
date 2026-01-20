@@ -1,0 +1,6 @@
+{
+  "enabledMcpjsonServers": [
+    "cf_docs",
+    "cf_bindings"
+  ]
+}

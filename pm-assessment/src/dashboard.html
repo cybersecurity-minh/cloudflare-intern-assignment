@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback Radar</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #334155;
+    }
+    h1 { font-size: 24px; color: #f8fafc; }
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+    }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-primary:disabled {
+      background: #475569;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: #334155;
+      color: #e2e8f0;
+    }
+    .btn-secondary:hover { background: #475569; }
+    .btn-success {
+      background: #22c55e;
+      color: white;
+    }
+    .btn-success:hover { background: #16a34a; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 1024px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #334155;
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #f8fafc;
+    }
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .search-bar input, .search-bar select {
+      padding: 10px 14px;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-size: 14px;
+    }
+    .search-bar input { flex: 1; }
+    .search-bar input:focus, .search-bar select:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+    .feedback-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .feedback-item {
+      padding: 12px;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .feedback-item:hover {
+      background: #334155;
+      border-color: #3b82f6;
+    }
+    .feedback-item.selected {
+      background: #1e3a5f;
+      border-color: #3b82f6;
+    }
+    .feedback-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .feedback-title {
+      font-weight: 500;
+      color: #f8fafc;
+      font-size: 14px;
+    }
+    .feedback-source {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #334155;
+      color: #94a3b8;
+    }
+    .feedback-body {
+      font-size: 13px;
+      color: #94a3b8;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .status-badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+    }
+    .status-pending { background: #854d0e; color: #fef08a; }
+    .status-processing { background: #1e40af; color: #93c5fd; }
+    .status-completed { background: #1e40af; color: #93c5fd; }
+    .status-failed { background: #c2410c; color: #fed7aa; }
+    .sentiment-badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-left: 4px; }
+    .sentiment-positive { background: #166534; color: #86efac; }
+    .sentiment-neutral { background: #475569; color: #cbd5e1; }
+    .sentiment-negative { background: #991b1b; color: #fca5a5; }
+    .detail-panel {
+      min-height: 300px;
+    }
+    .detail-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: #64748b;
+    }
+    .detail-content h3 {
+      font-size: 18px;
+      color: #f8fafc;
+      margin-bottom: 8px;
+    }
+    .detail-meta {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    .detail-body {
+      background: #0f172a;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .analysis-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #334155;
+    }
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .analysis-card {
+      background: #0f172a;
+      padding: 12px;
+      border-radius: 8px;
+    }
+    .analysis-label {
+      font-size: 11px;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .analysis-value {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .sentiment-positive { color: #22c55e; }
+    .sentiment-neutral { color: #eab308; }
+    .sentiment-negative { color: #ef4444; }
+    .themes-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .theme-tag {
+      background: #334155;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .digest-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .digest-card {
+      background: #0f172a;
+      padding: 16px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .digest-number {
+      font-size: 28px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+    .digest-label {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .sentiment-bar {
+      display: flex;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .sentiment-bar-positive { background: #22c55e; }
+    .sentiment-bar-neutral { background: #eab308; }
+    .sentiment-bar-negative { background: #ef4444; }
+    .similar-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: #0f172a;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .similar-item:hover { background: #1e3a5f; }
+    .similar-score {
+      font-size: 14px;
+      font-weight: 600;
+      color: #3b82f6;
+    }
+    .similar-themes {
+      font-size: 11px;
+      color: #64748b;
+    }
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      color: #64748b;
+    }
+    .loading::after {
+      content: '';
+      width: 20px;
+      height: 20px;
+      border: 2px solid #334155;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error {
+      background: #450a0a;
+      border: 1px solid #991b1b;
+      color: #fca5a5;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .window-toggle {
+      display: flex;
+      gap: 8px;
+    }
+    .window-toggle button {
+      padding: 4px 12px;
+      border: 1px solid #334155;
+      background: transparent;
+      color: #94a3b8;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .window-toggle button.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: white;
+    }
+    .top-themes {
+      margin-top: 16px;
+    }
+    .theme-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #334155;
+      font-size: 14px;
+    }
+    .theme-row:last-child { border-bottom: none; }
+    .actions-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #334155;
+      font-size: 13px;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Feedback Radar</h1>
+      <div>
+        <button class="btn btn-secondary" onclick="seedDatabase()">Seed Data</button>
+        <a href="/docs" class="btn btn-secondary" style="text-decoration:none;margin-left:8px;">API Docs</a>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Left Column -->
+      <div>
+        <!-- Feedback List Panel -->
+        <div class="panel" style="margin-bottom: 20px;">
+          <div class="panel-header">
+            <span class="panel-title">Feedback</span>
+            <span id="feedbackCount" style="font-size:13px;color:#64748b;">0 items</span>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search feedback..." onkeyup="handleSearch(event)">
+            <select id="sourceFilter" onchange="currentOffset = 0; loadFeedback()">
+              <option value="">All Sources</option>
+              <option value="github">GitHub</option>
+              <option value="slack">Slack</option>
+              <option value="email">Email</option>
+              <option value="intercom">Intercom</option>
+            </select>
+          </div>
+          <div id="feedbackList" class="feedback-list">
+            <div class="loading">Loading feedback</div>
+          </div>
+          <div class="pagination">
+            <span id="paginationInfo">Showing 0-0 of 0</span>
+            <div>
+              <button class="btn btn-secondary" onclick="prevPage()" id="prevBtn" disabled>Prev</button>
+              <button class="btn btn-secondary" onclick="nextPage()" id="nextBtn" disabled>Next</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Digest Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Digest</span>
+            <div class="window-toggle">
+              <button id="window24h" class="active" onclick="loadDigest('24h')">24h</button>
+              <button id="window7d" onclick="loadDigest('7d')">7d</button>
+            </div>
+          </div>
+          <div id="digestContent">
+            <div class="loading">Loading digest</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div>
+        <!-- Detail Panel -->
+        <div class="panel detail-panel" style="margin-bottom: 20px;">
+          <div class="panel-header">
+            <span class="panel-title">Details</span>
+            <div class="actions-bar" id="detailActions" style="display:none;">
+              <button class="btn btn-primary" id="analyzeBtn" onclick="analyzeSelected()">Analyze</button>
+            </div>
+          </div>
+          <div id="detailContent">
+            <div class="detail-empty">Select feedback to view details</div>
+          </div>
+        </div>
+
+        <!-- Similar Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Similar Feedback</span>
+          </div>
+          <div id="similarContent">
+            <div class="detail-empty" style="height:100px;">Select analyzed feedback to find similar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let feedbackData = [];
+    let selectedFeedback = null;
+    let currentOffset = 0;
+    const limit = 10;
+    let total = 0;
+    let searchTimeout = null;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadFeedback();
+      loadDigest('24h');
+    });
+
+    // API helpers
+    async function api(endpoint, options = {}) {
+      const res = await fetch(endpoint, {
+        headers: { 'Content-Type': 'application/json' },
+        ...options
+      });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(error.error || error.message || 'Request failed');
+      }
+      return res.json();
+    }
+
+    // Load feedback list
+    async function loadFeedback() {
+      const listEl = document.getElementById('feedbackList');
+      listEl.innerHTML = '<div class="loading">Loading feedback</div>';
+
+      try {
+        const source = document.getElementById('sourceFilter').value;
+        const q = document.getElementById('searchInput').value;
+        let url = `/api/feedback?limit=${limit}&offset=${currentOffset}`;
+        if (source) url += `&source=${encodeURIComponent(source)}`;
+        if (q) url += `&q=${encodeURIComponent(q)}`;
+
+        const data = await api(url);
+        feedbackData = data.data;
+        total = data.total;
+
+        renderFeedbackList();
+        updatePagination();
+      } catch (err) {
+        listEl.innerHTML = `<div class="error">${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function renderFeedbackList() {
+      const listEl = document.getElementById('feedbackList');
+      document.getElementById('feedbackCount').textContent = `${total} items`;
+
+      if (feedbackData.length === 0) {
+        listEl.innerHTML = '<div class="detail-empty">No feedback found</div>';
+        return;
+      }
+
+      listEl.innerHTML = feedbackData.map(f => {
+        const sentimentBadge = f.sentiment_label
+          ? `<span class="sentiment-badge sentiment-${escapeHtml(f.sentiment_label)}">${escapeHtml(f.sentiment_label)}</span>`
+          : '';
+        return `
+        <div class="feedback-item ${selectedFeedback?.id === f.id ? 'selected' : ''}"
+             onclick="selectFeedback(${f.id})">
+          <div class="feedback-item-header">
+            <span class="feedback-title">${escapeHtml(f.title)}</span>
+            <span>
+              <span class="feedback-source">${escapeHtml(f.source)}</span>
+              <span class="status-badge status-${escapeHtml(f.analysis_status)}">${escapeHtml(f.analysis_status)}</span>
+              ${sentimentBadge}
+            </span>
+          </div>
+          <div class="feedback-body">${escapeHtml(f.body)}</div>
+        </div>
+      `}).join('');
+    }
+
+    function updatePagination() {
+      const start = total === 0 ? 0 : currentOffset + 1;
+      const end = Math.min(currentOffset + limit, total);
+      document.getElementById('paginationInfo').textContent = `Showing ${start}-${end} of ${total}`;
+      document.getElementById('prevBtn').disabled = currentOffset === 0;
+      document.getElementById('nextBtn').disabled = currentOffset + limit >= total;
+    }
+
+    function prevPage() {
+      currentOffset = Math.max(0, currentOffset - limit);
+      loadFeedback();
+    }
+
+    function nextPage() {
+      currentOffset += limit;
+      loadFeedback();
+    }
+
+    function handleSearch(event) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        currentOffset = 0;
+        loadFeedback();
+      }, 300);
+    }
+
+    // Select feedback and load details
+    async function selectFeedback(id) {
+      const detailEl = document.getElementById('detailContent');
+      detailEl.innerHTML = '<div class="loading">Loading details</div>';
+      document.getElementById('detailActions').style.display = 'flex';
+
+      try {
+        const data = await api(`/api/feedback/${id}`);
+        selectedFeedback = { ...data.feedback, analysis: data.analysis };
+        renderFeedbackList();
+        renderDetail();
+
+        // Load similar if analyzed
+        if (data.analysis) {
+          loadSimilar(id);
+        } else {
+          document.getElementById('similarContent').innerHTML =
+            '<div class="detail-empty" style="height:100px;">Analyze feedback first to find similar</div>';
+        }
+      } catch (err) {
+        detailEl.innerHTML = `<div class="error">${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function renderDetail() {
+      const f = selectedFeedback;
+      const detailEl = document.getElementById('detailContent');
+      const analyzeBtn = document.getElementById('analyzeBtn');
+
+      analyzeBtn.disabled = f.analysis_status === 'processing';
+      analyzeBtn.textContent = f.analysis_status === 'completed' ? 'Re-analyze' :
+                               f.analysis_status === 'processing' ? 'Processing...' : 'Analyze';
+
+      let analysisHtml = '';
+      if (f.analysis) {
+        const a = f.analysis;
+        let themes = [];
+        try {
+          themes = a.themes_json ? JSON.parse(a.themes_json) : [];
+        } catch (e) {
+          console.warn('Failed to parse themes_json:', e);
+        }
+        analysisHtml = `
+          <div class="analysis-section">
+            <div class="panel-title" style="margin-bottom:12px;">Analysis Results</div>
+            <div class="analysis-grid">
+              <div class="analysis-card">
+                <div class="analysis-label">Sentiment</div>
+                <div class="analysis-value sentiment-${escapeHtml(a.sentiment_label)}">${escapeHtml(a.sentiment_label)}</div>
+                <div style="font-size:12px;color:#64748b;">${(a.sentiment_confidence * 100).toFixed(0)}% confidence</div>
+              </div>
+              <div class="analysis-card">
+                <div class="analysis-label">Urgency Score</div>
+                <div class="analysis-value" style="color:${a.urgency_score > 70 ? '#ef4444' : a.urgency_score > 40 ? '#eab308' : '#22c55e'}">${a.urgency_score}/100</div>
+                <div style="font-size:12px;color:#64748b;">${escapeHtml(a.urgency_reason || '')}</div>
+              </div>
+            </div>
+            <div class="analysis-card" style="margin-bottom:12px;">
+              <div class="analysis-label">Summary</div>
+              <div style="font-size:14px;margin-top:4px;">${escapeHtml(a.summary || '')}</div>
+            </div>
+            <div class="analysis-card" style="margin-bottom:12px;">
+              <div class="analysis-label">Next Action</div>
+              <div style="font-size:14px;margin-top:4px;">${escapeHtml(a.next_action || '')}</div>
+            </div>
+            <div class="analysis-card">
+              <div class="analysis-label">Themes</div>
+              <div class="themes-list">
+                ${themes.map(t => `<span class="theme-tag" title="${escapeHtml(t.evidence_quote || '')}">${escapeHtml(t.theme)}</span>`).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      detailEl.innerHTML = `
+        <div class="detail-content">
+          <h3>${escapeHtml(f.title)}</h3>
+          <div class="detail-meta">
+            <span>Source: <strong>${escapeHtml(f.source)}</strong></span>
+            <span>ID: <strong>${f.id}</strong></span>
+            <span>Status: <span class="status-badge status-${escapeHtml(f.analysis_status)}">${escapeHtml(f.analysis_status)}</span></span>
+          </div>
+          <div class="detail-body">${escapeHtml(f.body)}</div>
+          ${analysisHtml}
+        </div>
+      `;
+    }
+
+    // Analyze selected feedback
+    async function analyzeSelected() {
+      if (!selectedFeedback) return;
+
+      const btn = document.getElementById('analyzeBtn');
+      const isReanalyze = selectedFeedback.analysis_status === 'completed';
+      btn.disabled = true;
+      btn.textContent = 'Analyzing...';
+
+      try {
+        const url = isReanalyze
+          ? `/api/analyze/${selectedFeedback.id}?force=true`
+          : `/api/analyze/${selectedFeedback.id}`;
+        await api(url, { method: 'POST' });
+        // Reload feedback and detail
+        await loadFeedback();
+        await selectFeedback(selectedFeedback.id);
+      } catch (err) {
+        alert('Analysis failed: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Analyze';
+      }
+    }
+
+    // Load similar feedback
+    async function loadSimilar(id) {
+      const el = document.getElementById('similarContent');
+      el.innerHTML = '<div class="loading">Finding similar</div>';
+
+      try {
+        const data = await api(`/api/similar/${id}`);
+        if (data.similar.length === 0) {
+          el.innerHTML = '<div class="detail-empty" style="height:100px;">No similar feedback found</div>';
+          return;
+        }
+
+        el.innerHTML = data.similar.map(s => `
+          <div class="similar-item" onclick="selectFeedback(${s.feedback_id})">
+            <div>
+              <div style="font-size:14px;color:#f8fafc;">${escapeHtml(s.title || `Feedback #${s.feedback_id}`)}</div>
+              <div class="similar-themes">Matching: ${s.matching_themes.map(t => escapeHtml(t)).join(', ')}</div>
+            </div>
+            <div class="similar-score">${(s.similarity_score * 100).toFixed(0)}%</div>
+          </div>
+        `).join('');
+      } catch (err) {
+        el.innerHTML = `<div class="error">${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    // Load digest
+    async function loadDigest(window) {
+      document.getElementById('window24h').classList.toggle('active', window === '24h');
+      document.getElementById('window7d').classList.toggle('active', window === '7d');
+
+      const el = document.getElementById('digestContent');
+      el.innerHTML = '<div class="loading">Loading digest</div>';
+
+      try {
+        const data = await api(`/api/digest?window=${window}`);
+        const sentiment = data.sentiment_breakdown;
+        const sentimentTotal = sentiment.positive + sentiment.neutral + sentiment.negative || 1;
+
+        el.innerHTML = `
+          <div class="digest-grid">
+            <div class="digest-card">
+              <div class="digest-number">${data.total_feedback}</div>
+              <div class="digest-label">Total Feedback</div>
+            </div>
+            <div class="digest-card">
+              <div class="digest-number">${data.avg_urgency}</div>
+              <div class="digest-label">Avg Urgency</div>
+            </div>
+            <div class="digest-card">
+              <div class="digest-number">${data.sources.length}</div>
+              <div class="digest-label">Sources</div>
+            </div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <div class="analysis-label" style="margin-bottom:8px;">Sentiment Breakdown</div>
+            <div class="sentiment-bar">
+              <div class="sentiment-bar-positive" style="width:${(sentiment.positive/sentimentTotal)*100}%"></div>
+              <div class="sentiment-bar-neutral" style="width:${(sentiment.neutral/sentimentTotal)*100}%"></div>
+              <div class="sentiment-bar-negative" style="width:${(sentiment.negative/sentimentTotal)*100}%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b;">
+              <span style="color:#22c55e;">Positive: ${sentiment.positive}</span>
+              <span style="color:#eab308;">Neutral: ${sentiment.neutral}</span>
+              <span style="color:#ef4444;">Negative: ${sentiment.negative}</span>
+            </div>
+          </div>
+          <div class="top-themes">
+            <div class="analysis-label" style="margin-bottom:8px;">Top Themes</div>
+            ${data.top_themes.length === 0 ? '<div style="color:#64748b;font-size:13px;">No themes yet - analyze some feedback</div>' :
+              data.top_themes.map(t => `
+                <div class="theme-row">
+                  <span>${escapeHtml(t.theme)}</span>
+                  <span style="color:#64748b;">${t.count}</span>
+                </div>
+              `).join('')}
+          </div>
+          <div class="top-themes" style="margin-top:16px;">
+            <div class="analysis-label" style="margin-bottom:8px;">By Source</div>
+            ${data.sources.map(s => `
+              <div class="theme-row">
+                <span>${escapeHtml(s.source)}</span>
+                <span style="color:#64748b;">${s.count}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } catch (err) {
+        el.innerHTML = `<div class="error">${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    // Seed database
+    async function seedDatabase() {
+      try {
+        const data = await api('/api/seed', { method: 'POST' });
+        alert(`Seeded ${data.inserted} feedback items`);
+        loadFeedback();
+        loadDigest(document.getElementById('window24h').classList.contains('active') ? '24h' : '7d');
+      } catch (err) {
+        alert('Seed failed: ' + err.message);
+      }
+    }
+
+    // Utility
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

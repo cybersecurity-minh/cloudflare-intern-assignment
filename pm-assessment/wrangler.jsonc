@@ -1,0 +1,37 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "pm-assessment",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-09-27",
+	"observability": {
+		"enabled": true
+	},
+	"rules": [
+		{
+			"type": "Text",
+			"globs": ["**/*.html"],
+			"fallthrough": false
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "feedback-radar-db",
+			"database_id": "faa25392-c85b-404a-bc22-a9d879980509"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "CACHE",
+			"id": "5aa4bdcdba2e48c98b3f7e604370bc24",
+			"preview_id": "e73f38ec457c45fa930328ef9acc1290"
+		}
+	],
+	"ai": {
+		"binding": "AI"
+	}
+}
